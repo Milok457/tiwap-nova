@@ -1,0 +1,33 @@
+name: SonarQube analysis
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  sonarqube:
+    runs-on: self-hosted        # runner qui peut joindre SonarQube
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # historique complet, utile à SonarQube
+
+      - name: Tests
+        run: |
+          python3 -m venv .venv
+          . .venv/bin/activate
+          pip install pytest
+          python -m pytest tests/ -v
+
+      - name: SonarQube scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.qualitygate.wait=true
